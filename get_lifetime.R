@@ -25,14 +25,8 @@ pacman::p_load(
   glue,
   rvest,
   cli,
-  digest,
-  googledrive
+  digest
 )
-
-
-options(googledrive_quiet = TRUE)
-
-drive_auth(path = Sys.getenv("GOOGLE_APPLICATION_KEY"))
 
 
 
@@ -63,7 +57,7 @@ browser_df <- browser_launch(
   user_data_dir = "out"
 )
 
-dir.create("lifelong")
+dir.create("last_7_days")
 
 old_dat <- dir("daily", full.names = F) %>% 
   keep(~str_detect(.x, "rds")) %>%
@@ -201,7 +195,7 @@ dt <- expand_grid(countries, daysies) %>%
 
 
 try({
-  all_reports_old <- readRDS("logs/all_reports_lifelong.rds")
+  all_reports_old <- readRDS("logs/all_reports_last_7_days.rds")
 })
 
 if(!exists("all_reports_old")){
@@ -233,7 +227,7 @@ dt %>%
       fs::dir_create(path_dir)
     
     #time_preset <- "yesterday"
-    time_preset <- "lifelong"
+    time_preset <- "last_7_days"
 
     
     js_code <-
@@ -343,8 +337,8 @@ try({
       # .x <- list(day = "2021-12-17", country = "NL")
       # .x <- list(day = "2021-12-16", country = "NL")
       # .x <- list(day = "2021-01-17", country = "NL")
-      # time_preset <- "lifelong"
-      time_preset <- "lifelong"
+      # time_preset <- "last_7_days"
+      time_preset <- "last_7_days"
       # time_preset <- "last_90_days"
       # time_preset <- "last_365_days"
       
@@ -450,12 +444,12 @@ try({
 
 try({
   thedata <- thedata %>%
-    bind_rows(readRDS(paste0("lifelong/",cntry_str, ".rds"))) %>%
+    bind_rows(readRDS(paste0("last_7_days/",cntry_str, ".rds"))) %>%
     distinct()   
 })
       
 thedata %>%
-    saveRDS(paste0("lifelong/",cntry_str, ".rds"))
+    saveRDS(paste0("last_7_days/",cntry_str, ".rds"))
       
       return(thedata)
     })
@@ -489,32 +483,9 @@ all_reports <- all_reports_old %>%
   unique()
 print("################11")
 
-saveRDS(all_reports, file = "logs/all_reports_lifelong.rds")
+saveRDS(all_reports, file = "logs/all_reports_last_7_days.rds")
 
 print("################12")
-
-
-extracted_id <- googledrive::drive_ls("meta_reports") %>% 
-  filter(name == "extracted_lifelong") %>% pull(id)
-
-print("################13")
-
-
-unlink("extracted/regions", recursive = T, force = T)
-drive_upload_folder(folder = "extracted", drive_path = extracted_id)
-
-print("################14")
-
-
-report_id <- googledrive::drive_ls("meta_reports") %>% 
-  filter(name == "report_lifelong") %>% pull(id)
-
-print("################15")
-
-
-drive_upload_folder(folder = "report", drive_path = report_id)
-
-print("################16")
 
 
 unlink("report", recursive = T, force = T)
