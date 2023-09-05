@@ -61,7 +61,7 @@ jobs:
       - name: Pull Latest Changes
         run: git pull origin main
       - name: "Script - 30 Run"
-        run: Rscript 'get_lifetime.R'
+        run: Rscript 'get_last_30_days.R'
 
 
       - name: "Commit"
