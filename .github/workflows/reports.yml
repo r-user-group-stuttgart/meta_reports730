@@ -59,7 +59,7 @@ jobs:
       - name: Pull Latest Changes
         run: git pull origin main
       - name: "Script - Run"
-        run: Rscript 'get.R'
+        run: Rscript 'get_last_7_days.R'
 
 
       - name: "Commit"
