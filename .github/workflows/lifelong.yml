@@ -1,4 +1,4 @@
-name: Get Lifelong Reports
+name: Get 30 Reports
 
 # Only trigger, when the build workflow succeeded
 on:
@@ -8,8 +8,8 @@ on:
       - completed
 
 jobs:
-  update-lifelong-reports:
-    name: Update Lifelong Reports
+  update-30-reports:
+    name: Update 30 Reports
     runs-on: ubuntu-20.04
     permissions:
       contents: write
@@ -60,11 +60,11 @@ jobs:
         shell: Rscript {0}
       - name: Pull Latest Changes
         run: git pull origin main
-      - name: "Script - Lifelong Run"
+      - name: "Script - 30 Run"
         run: Rscript 'get_lifetime.R'
 
 
       - name: "Commit"
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: Retrieve Lifelong Reports
+          commit_message: Retrieve 30 Reports
