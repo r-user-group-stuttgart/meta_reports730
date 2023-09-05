@@ -25,14 +25,8 @@ pacman::p_load(
   glue,
   rvest,
   cli,
-  digest,
-  googledrive
+  digest
 )
-
-
-options(googledrive_quiet = TRUE)
-
-drive_auth(path = Sys.getenv("GOOGLE_APPLICATION_KEY"))
 
 
 
@@ -63,10 +57,13 @@ browser_df <- browser_launch(
   user_data_dir = "out"
 )
 
-# daily_dat <- readRDS("data/daily.rds")
+dir.create("last_30_days")
+
 old_dat <- dir("daily", full.names = F) %>% 
   keep(~str_detect(.x, "rds")) %>%
-  str_remove_all("\\.rds")
+  str_remove_all("\\.rds") %>%
+  unique()
+
 
 print("headlesss")
 # Create a new page
@@ -197,11 +194,13 @@ dt <- expand_grid(countries, daysies) %>%
   glimpse
 
 
-# all_reports <- dir("report", full.names = T, recursive = T)
+try({
+  all_reports_old <- readRDS("logs/all_reports_last_30_days.rds")
+})
 
-# saveRDS(all_reports, "logs/all_reports.rds")
-
-all_reports_old <- readRDS("logs/all_reports.rds")
+if(!exists("all_reports_old")){
+ all_reports_old <- c()
+}
 
 # dir("report/ES", full.names = T, recursive = T) %>% sort
 dir.create("extracted")
@@ -227,7 +226,9 @@ dt %>%
     if (!fs::dir_exists(path_dir))
       fs::dir_create(path_dir)
     
-    time_preset <- "yesterday"
+    #time_preset <- "yesterday"
+    time_preset <- "last_30_days"
+
     
     js_code <-
       paste0(
@@ -336,8 +337,8 @@ try({
       # .x <- list(day = "2021-12-17", country = "NL")
       # .x <- list(day = "2021-12-16", country = "NL")
       # .x <- list(day = "2021-01-17", country = "NL")
-      # time_preset <- "lifelong"
-      time_preset <- "yesterday"
+      # time_preset <- "last_30_days"
+      time_preset <- "last_30_days"
       # time_preset <- "last_90_days"
       # time_preset <- "last_365_days"
       
@@ -393,22 +394,8 @@ try({
 
 
 
-try({
-  
   print("garcia")
-  dates_already_present_old <- readRDS("logs/dates_already_present.rds")
-  
-  dates_already_present <-
-    dir("extracted", full.names = T, recursive = F) %>%
-    # .[10] %>% 
-    str_split("_") %>% map_chr(~ paste0(
-      str_split(.x, "_") %>% unlist %>% .[3],
-      "/",
-      lubridate::as_date(str_split(.x, "_") %>% unlist %>% .[2]) + (lubridate::days(1))
-    )) %>%
-    unique() %>%
-    discard( ~ str_detect(.x, "NA/NA")) %>%
-    na.omit() %>% as.character() 
+
   
   
   dir("report", full.names = T, recursive = T) %>%
@@ -418,22 +405,6 @@ try({
       })
     })
   
-  print("garcia2")
-#   old_dat <- dir("daily", full.names = T) %>%
-#     keep(~str_detect(.x, "rds")) %>%
-#     map_dfr_progress(readRDS)
-  
-#  if (any(c("name_disclaimer_amount") %in% names(old_dat))) {
-#    old_dat <- old_dat %>%
-#      filter(is.na(name_disclaimer_amount))  %>%
-#      janitor::remove_empty()
-#  } else {
-#    old_dat <- old_dat
-#  }
-  
-  # the_dat %>% count(id, sort  = T)
-  
-  # table(1:50000%%50)
   
   print("garcia3")
   
@@ -441,14 +412,6 @@ try({
   print(head(step1))
   tobeextracted <- step1 %>% keep(~ str_detect(.x, "advert")) 
   print(head(tobeextracted))
-#  tobeextracted <- step2 %>%  discard( ~ magrittr::is_in(.x, unique(old_dat$path)))
-#  print(head(tobeextracted))
-  
-  # tobeextracted <- dir("extracted", full.names = T, recursive = F) %>%
-  #    keep(~ str_detect(.x, "advert"))  %>%
-  #    discard( ~ magrittr::is_in(.x, unique(old_dat$path))) 
-  
-  #  print(head(tobeextracted))
   
   the_dat <- tobeextracted %>%
     walk_progress(~ {
@@ -479,16 +442,18 @@ try({
     # print(thedata)
   }
 
-  thedata %>%
-    bind_rows(readRDS(paste0("daily/",cntry_str, ".rds"))) %>%
-    distinct() %>%
-    saveRDS(paste0("daily/",cntry_str, ".rds"))
+try({
+  thedata <- thedata %>%
+    bind_rows(readRDS(paste0("last_30_days/",cntry_str, ".rds"))) %>%
+    distinct()   
+})
+      
+thedata %>%
+    saveRDS(paste0("last_30_days/",cntry_str, ".rds"))
       
       return(thedata)
     })
   
-
-})
 
 print("################5")
 
@@ -500,14 +465,6 @@ print("################6")
 dir() %>%
   keep( ~ str_detect(.x, ".txt")) %>%
   walk(file.remove)
-
-print("################7")
-
-
-
-dates_already_present <- dates_already_present_old %>% 
-  c(dates_already_present) %>% 
-  unique()
 
 
 print("################8")
@@ -526,32 +483,9 @@ all_reports <- all_reports_old %>%
   unique()
 print("################11")
 
-saveRDS(all_reports, file = "logs/all_reports.rds")
+saveRDS(all_reports, file = "logs/all_reports_last_30_days.rds")
 
 print("################12")
-
-
-extracted_id <- googledrive::drive_ls("meta_reports") %>% 
-  filter(name == "extracted") %>% pull(id)
-
-print("################13")
-
-
-unlink("extracted/regions", recursive = T, force = T)
-drive_upload_folder(folder = "extracted", drive_path = extracted_id)
-
-print("################14")
-
-
-report_id <- googledrive::drive_ls("meta_reports") %>% 
-  filter(name == "report") %>% pull(id)
-
-print("################15")
-
-
-drive_upload_folder(folder = "report", drive_path = report_id)
-
-print("################16")
 
 
 unlink("report", recursive = T, force = T)
@@ -559,7 +493,7 @@ unlink("extracted", recursive = T, force = T)
 
 print("################17")
 
-source("save.R")
+# source("save.R")
 
 
 
