@@ -1,3 +1,0 @@
-contile.services.mozilla.com:HSTS	0	19610	1725886807608,1,0
-www.facebook.com^partitionKey=%28http%2Cfacebook.com%29:HSTS	0	19610	1709902808285,1,0
-spocs.getpocket.com:HSTS	0	19610	1757422807727,1,0
